@@ -54,7 +54,7 @@ last (Cons x xs) = last xs
 take :: Nat -> List a -> List a
 take Zero _ = Nil
 take _ Nil = Nil
-take (Succ n) (Cons x xs) = (Cons x (take n xs))
+take (Succ n) (Cons x xs) = Cons x $ take n xs
 
 -- Список без n первых элементов
 drop :: Nat -> List a -> List a
@@ -71,8 +71,8 @@ filter p (Cons x xs) = if' (p x) (Cons x (filter p xs)) (filter p xs)
 -- говорит "выбросить/оставить b".
 gfilter :: (a -> Maybe b) -> List a -> List b
 gfilter _ Nil = Nil
-gfilter p (Cons x xs) = case p x of Just f -> (Cons x (gfilter p xs))
-                                    Nothing -> (gfilter p xs)
+gfilter p (Cons x xs) = case p x of Just y -> Cons y $ gfilter p xs
+                                    Nothing -> gfilter p xs
 
 -- Копировать из списка в результат до первого нарушения предиката
 -- takeWhile (< 3) [1,2,3,4,1,2,3,4] == [1,2]
@@ -112,11 +112,17 @@ reverse (Cons x xs) = reverse xs ++ (Cons x Nil)
 -- (*) Все подсписки данного списка
 subsequences :: List a -> List (List a)
 subsequences Nil = Cons Nil Nil
-subsequences (Cons x xs) = undefined
+subsequences (Cons x xs) = subsequences xs ++ (map (Cons x) (subsequences xs))
 
 -- (*) Все перестановки элементов данного списка
 permutations :: List a -> List (List a)
-permutations = undefined
+permutations Nil = Cons Nil Nil
+permutations (Cons x xs) =
+    let permXs = permutations xs
+        smallPerm list = Cons (last list) (init list)
+        repeatt (Succ n) f x = case n of Zero -> Cons (f x) Nil
+                                         Succ _ -> Cons (f x) $ repeatt n f $ f x
+    in  concatMap (repeatt (Succ (length xs)) smallPerm) (map (Cons x) permXs)
 
 -- (*) Если можете. Все перестановки элементов данного списка
 -- другим способом
@@ -166,10 +172,9 @@ foldr f z (Cons x xs) = f x $ foldr f z xs
 
 -- Аналогично
 --  head (scanr f z xs) == foldr f z xs.
--- WTF
 scanr :: (a -> b -> b) -> b -> List a -> List b
 scanr f z Nil = (Cons z Nil)
-scanr f z (Cons x xs@(Cons y ys)) = Cons (f x y) $ scanr f z xs
+scanr f z (Cons x xs) = Cons (f x (head (scanr f z xs))) $ scanr f z xs
 
 -- Должно завершаться за конечное время
 finiteTimeTest = take (Succ $ Succ $ Succ $ Succ Zero) $ foldr (Cons) Nil $ repeat Zero
@@ -181,7 +186,7 @@ map f (Cons x xs) = (Cons (f x) (map f xs))
 
 -- Склеивает список списков в список
 concat :: List (List a) -> List a
-concat lst = foldr (++) Nil lst --not sure if this (and next) works
+concat lst = foldr (++) Nil lst
 
 -- Эквивалент (concat . map), но эффективнее
 concatMap :: (a -> List b) -> List a -> List b
