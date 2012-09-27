@@ -146,35 +146,27 @@ gcd a b = gcd b (natMod a b)
 -- Целые числа
 
 -- Требуется, чтобы представление каждого числа было единственным
-data Int = Negative Nat | IntZero | Positive Nat deriving (Show,Read)
+data Int = Negative Nat | Positive Nat deriving (Show,Read)
 
-intZero   = IntZero   -- 0
-intOne    = Positive Zero    -- 1
+intZero   = Positive Zero   -- 0
+intOne    = Positive $ Succ Zero    -- 1
 intNegOne = Negative Zero -- -1
 
 -- n -> - n
 intNeg :: Int -> Int
-intNeg (Negative n) = (Positive n)
+intNeg (Negative n) = Positive $ Succ n
 intNeg IntZero = IntZero
-intNeg (Positive n) = (Negative n)
-
-posNat :: Nat -> Int
-posNat Zero = IntZero
-posNat n = Positive $ dec n
-
-negNat :: Nat -> Int
-negNat Zero = IntZero
-negNat n = Negative $ dec n
+intNeg (Positive (Succ n)) = Negative n
 
 -- Дальше также как для натуральных
 intCmp :: Int -> Int -> Tri
 intCmp (Negative n) (Negative m) = natCmp m n
-intCmp (Negative n) _ = LT
-intCmp IntZero (Negative n) = GT
+intCmp (Negative _) _ = LT
+intCmp IntZero (Negative _) = GT
 intCmp IntZero IntZero = EQ
-intCmp IntZero (Positive n) = LT
+intCmp IntZero (Positive _) = LT
 intCmp (Positive n) (Positive m) = natCmp n m
-intCmp (Positive n) _ = GT
+intCmp (Positive _) _ = GT
 
 intEq :: Int -> Int -> Bool
 intEq n m = case (intCmp n m) of LT -> False
@@ -192,15 +184,15 @@ infixl 6 .+., .-.
 n .+. IntZero = n
 IntZero .+. m = m
 (Negative n) .+. (Negative m) = Negative (Succ (n +. m))
-(Negative n) .+. (Positive m) = case compare of LT -> (Positive (m -. Succ n))
-                                                EQ -> IntZero
-                                                GT -> (Negative (n -. Succ m))
+(Negative n) .+. (Positive m) = case compare of LT -> Positive $ m -. Succ n
+                                                EQ -> intNegOne
+                                                GT -> Negative $ n -. m
                                     where compare = natCmp n m
-(Positive n) .+. (Negative m) = case compare of LT -> (Negative (m -. Succ n))
-                                                EQ -> IntZero
-                                                GT -> (Positive (n -. Succ m))
+(Positive n) .+. (Negative m) = case compare of LT -> Negative $ m -. n
+                                                EQ -> intNegOne
+                                                GT -> Positive $ n -. Succ m
                                     where compare = natCmp n m
-(Positive n) .+. (Positive m) = Positive (Succ (n +. m))
+(Positive n) .+. (Positive m) = Positive (n +. m)
 
 (.-.) :: Int -> Int -> Int
 n .-. m = n .+. (intNeg m)
@@ -209,10 +201,10 @@ infixl 7 .*.
 (.*.) :: Int -> Int -> Int
 n .*. IntZero = IntZero
 IntZero .*. m = IntZero
-(Negative n) .*. (Negative m) = posNat $ (Succ n) *. (Succ m)
-(Negative n) .*. (Positive m) = negNat $ (Succ n) *. (Succ m)
-(Positive m) .*. (Negative n) = negNat $ (Succ n) *. (Succ m)
-(Positive n) .*. (Positive m) = posNat $ (Succ n) *. (Succ m)
+n@(Negative _) .*. m@(Negative _) = (intNeg n) .*. (intNeg m)
+n@(Negative _) .*. m@(Positive _) = intNeg $ (intNeg n) .*. m
+n@(Positive _) .*. m@(Negative _) = intNeg $ (intNeg m) .*. n
+n@(Positive _) .*. m@(Positive _) = Positive $ n *. m
 
 -------------------------------------------
 -- Рациональные числа
@@ -224,13 +216,13 @@ ratNeg (Rat x y) = Rat (intNeg x) y
 
 -- У рациональных ещё есть обратные элементы
 ratInv :: Rat -> Rat
-ratInv (Rat (Negative n) m) = (Rat (negNat m) (Succ n))
+ratInv (Rat n@(Negative _) m) = ratNeg $ Rat (intNeg n) m
 ratInv (Rat IntZero _) = error "Trying to get inversed from zero"
-ratInv (Rat (Positive n) m) = (Rat (posNat m) (Succ n))
+ratInv (Rat (Positive n) m) = Rat (Positive m) n
 
 -- Дальше как обычно
 ratCmp :: Rat -> Rat -> Tri
-ratCmp (Rat n1 m1) (Rat n2 m2) = intCmp (n1 .*. (posNat m2)) (n2 .*. (posNat m1))
+ratCmp (Rat n1 m1) (Rat n2 m2) = intCmp (n1 .*. (Positive m2)) (n2 .*. (Positive m1))
 
 ratEq :: Rat -> Rat -> Bool
 ratEq n m = case (ratCmp n m) of LT -> False
@@ -244,7 +236,7 @@ ratLt n m = case (ratCmp n m) of LT -> True
 
 infixl 7 %+, %-
 (%+) :: Rat -> Rat -> Rat
-(Rat n1 m1) %+ (Rat n2 m2) = Rat ((n1 .*. (posNat m2)) .+. (n2 .*. (posNat m1))) (m1 *. m2)
+(Rat n1 m1) %+ (Rat n2 m2) = Rat ((n1 .*. (Positive m2)) .+. (n2 .*. (Positive m1))) (m1 *. m2)
 
 (%-) :: Rat -> Rat -> Rat
 n %- m = n %+ (ratNeg m)
