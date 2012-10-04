@@ -9,7 +9,7 @@ data Tree a = Nil | Node a (Tree a) (Tree a) deriving (Show, Read)
 emptyTree :: Tree a
 emptyTree = Nil
 
-newTree :: a -> Trea a
+newTree :: a -> Tree a
 newTree x = Node x Nil Nil
 
 treeInsertToRoot :: Tree a -> a -> Tree a
@@ -26,11 +26,11 @@ treeInsertToTheRight (Node _ _ right) x = treeInsertToTheRight right x
 
 treeLeftTurn :: Tree a -> Tree a
 treeLeftTurn (Node _ _ Nil) = error "Trying to make left turn while right child is Nil!"
-treeLeftTurn (Node x left (Node y left1 right1)) = Node y (Node x left left1) right
+treeLeftTurn (Node x left (Node y left1 right1)) = Node y (Node x left left1) right1
 
 treeRightTurn :: Tree a -> Tree a
 treeRightTurn (Node _ Nil _) = error "Trying to make right turn while left child is Nil!"
-treeRightTurn (Node x (Node y left1 right1) right) = Node y left $ Node x right1 right
+treeRightTurn (Node x (Node y left1 right1) right) = Node y left1 $ Node x right1 right
 
 map :: (a -> b) -> Tree a -> Tree b
 map f Nil = Nil
