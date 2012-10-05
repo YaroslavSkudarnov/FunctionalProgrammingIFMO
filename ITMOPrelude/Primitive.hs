@@ -155,16 +155,16 @@ intNegOne = Negative Zero -- -1
 -- n -> - n
 intNeg :: Int -> Int
 intNeg (Negative n) = Positive $ Succ n
-intNeg IntZero = IntZero
+intNeg (Positive Zero) = (Positive Zero)
 intNeg (Positive (Succ n)) = Negative n
 
 -- Дальше также как для натуральных
 intCmp :: Int -> Int -> Tri
 intCmp (Negative n) (Negative m) = natCmp m n
 intCmp (Negative _) _ = LT
-intCmp IntZero (Negative _) = GT
-intCmp IntZero IntZero = EQ
-intCmp IntZero (Positive _) = LT
+intCmp (Positive Zero) (Negative _) = GT
+intCmp (Positive Zero) (Positive Zero) = EQ
+intCmp (Positive Zero) (Positive _) = LT
 intCmp (Positive n) (Positive m) = natCmp n m
 intCmp (Positive _) _ = GT
 
@@ -181,8 +181,8 @@ intLt n m = case (intCmp n m) of LT -> True
 infixl 6 .+., .-.
 -- У меня это единственный страшный терм во всём файле
 (.+.) :: Int -> Int -> Int
-n .+. IntZero = n
-IntZero .+. m = m
+n .+. Positive Zero = n
+Positive Zero .+. m = m
 (Negative n) .+. (Negative m) = Negative (Succ (n +. m))
 (Negative n) .+. (Positive m) = case compare of LT -> Positive $ m -. Succ n
                                                 EQ -> intNegOne
@@ -199,12 +199,12 @@ n .-. m = n .+. (intNeg m)
 
 infixl 7 .*.
 (.*.) :: Int -> Int -> Int
-n .*. IntZero = IntZero
-IntZero .*. m = IntZero
+n .*. Positive Zero = Positive Zero
+Positive Zero .*. m = Positive Zero
 n@(Negative _) .*. m@(Negative _) = (intNeg n) .*. (intNeg m)
 n@(Negative _) .*. m@(Positive _) = intNeg $ (intNeg n) .*. m
 n@(Positive _) .*. m@(Negative _) = intNeg $ (intNeg m) .*. n
-n@(Positive _) .*. m@(Positive _) = Positive $ n *. m
+(Positive n) .*. (Positive m) = Positive $ n *. m
 
 -------------------------------------------
 -- Рациональные числа
@@ -217,7 +217,7 @@ ratNeg (Rat x y) = Rat (intNeg x) y
 -- У рациональных ещё есть обратные элементы
 ratInv :: Rat -> Rat
 ratInv (Rat n@(Negative _) m) = ratNeg $ Rat (intNeg n) m
-ratInv (Rat IntZero _) = error "Trying to get inversed from zero"
+ratInv (Rat (Positive Zero) _) = error "Trying to get inversed from zero"
 ratInv (Rat (Positive n) m) = Rat (Positive m) n
 
 -- Дальше как обычно
