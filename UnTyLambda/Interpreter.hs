@@ -35,8 +35,6 @@ subst (App t t')  var what = App (subst t var what) (subst t' var what)
 
 newname fv = head . filter (not . flip elem fv) . iterate ('_':)
 
---- ...
-
 ------------------------------------------------------------
 -- За исключением того, что требуется реализовать следующие
 -- стратегии нормализации (они все принимают максимальное
@@ -48,15 +46,51 @@ wh, no, wa, sa :: Integer -> Term -> Term
 
 -- Редукция аппликативным порядком
 sa 0 t = error $ "Too long sequence at [" ++ show t ++ "]"
-sa n v@(Var _) = v
-sa n l@(Lam _ _) = l
-sa n (App t1@(Lam x _) t2) = subst ((sa (n - 1) t1) x t2)
+sa n t = if changed then sa (n - 1) term
+                    else t
+    where (term, changed) = saAux t
+
+saAux :: Term -> (Term, Bool)
+saAux (Var v) = ((Var v), False)
+saAux (Lam v t) = (Lam v term, changed)
+    where (term, changed) = saAux t
+saAux (App t@(Lam v term) t') = if changed then (App t term', True)
+                                           else (subst term v t', True)
+                                    where (term', changed) = saAux t'
+saAux (App t t') = if changed then (App term t', True)
+                              else (App t term', changed')
+                       where (term, changed) = saAux t
+                             (term', changed') = saAux t'
 
 -- Нормализация нормальным порядком
-no = undefined
+no 0 t = error $ "Too long sequence at [" ++ show t ++ "]"
+no n t = if changed then no (n - 1) term
+                    else t
+    where (term, changed) = noAux t
+
+noAux :: Term -> (Term, Bool)
+noAux (Var v) = ((Var v), False)
+noAux (Lam v t) = (Lam v term, changed)
+    where (term, changed) = noAux t
+noAux (App t@(Lam v term) t') = (subst term v t', True)
+noAux (App t t') = if changed then (App term t', True)
+                              else (App t term', changed')
+                       where (term, changed) = noAux t
+                             (term', changed') = noAux t'
 
 -- Редукция в слабую головную нормальную форму
-wh = undefined
+wh 0 t = error $ "Too long sequence at [" ++ show t ++ "]"
+wh n t = if changed then wh (n - 1) term
+                    else t
+    where (term, changed) = whAux t
+
+whAux :: Term -> (Term, Bool)
+whAux (App t@(Lam v term) t') = (subst term v t', True)
+whAux (App t t') = if changed then (App term t', True)
+                              else (App t term', changed')
+                       where (term, changed) = whAux t
+                             (term', changed') = whAux t'
+whAux t = (t, False)
 
 -- (*) (не обязательно) Редукция "слабым" аппликативным порядком.
 -- Отличается от обычного аппликативного тем, что не лезет внутрь
