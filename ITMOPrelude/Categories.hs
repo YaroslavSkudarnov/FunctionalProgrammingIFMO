@@ -3,6 +3,7 @@ module ITMOPrelude.Categories where
 
 import ITMOPrelude.List
 import ITMOPrelude.Primitive
+import ITMOPrelude.Tree
 
 class Functor f where  
     fmap :: (a -> b) -> f a -> f b
@@ -12,25 +13,33 @@ class Monad m where
     (>>) :: m a -> m b -> m b
     return :: a -> m a
 
-class Applicative f where
-    pure :: a -> f a
-    (<*>) :: f (a -> b) -> f a -> f b
+class Category cat where
+    id :: cat a a
+    (<.>) :: cat b c -> cat a b -> cat a c
 
-class Arrow a where
-    arr :: (b -> c) -> a b c
-    (>>>) :: a b c -> a c d -> a b d
-    first :: a b c -> a (Pair b d) (pair c d)
+-- instances for Maybe
 
---Tests
+instance Functor Maybe where
+    fmap _ Nothing = Nothing
+    fmap f (Just x) = Just $ f x
+
+instance Monad Maybe where
+    Just x >>= f = f x
+    Nothing >>= _ = Nothing
+    _ >> x = x
+    return = Just
+
+-- instances for List
 
 instance Functor List where
-    fmap = map
+    fmap = List.map
 
 instance Monad List where
     xs >>= f = concatMap f xs
-    _ >> ys = ys
-    return x = Cons x Nil
+    _ >> xs = xs
+    return x = Cons x List.Nil
 
-instance Applicative List where
-    pure = return
-    fs <*> xs = fs >>= (\f -> (xs >>= (\x -> pure (f x))))
+-- instance for Tree
+
+instance Functor Tree where
+    fmap = Tree.map
