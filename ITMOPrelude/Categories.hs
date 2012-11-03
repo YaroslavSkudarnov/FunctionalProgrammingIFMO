@@ -1,21 +1,27 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module ITMOPrelude.Categories where
 
-import ITMOPrelude.List
 import ITMOPrelude.Primitive
+import ITMOPrelude.List
 import ITMOPrelude.Tree
 
-class Functor f where  
+class Functor f where
     fmap :: (a -> b) -> f a -> f b
 
-class Monad m where  
+class Monad m where
     (>>=) :: m a -> (a -> m b) -> m b
     (>>) :: m a -> m b -> m b
     return :: a -> m a
 
 class Category cat where
     id :: cat a a
-    (<.>) :: cat b c -> cat a b -> cat a c
+    (.) :: cat b c -> cat a b -> cat a c
+
+-- instance for (->)
+
+instance Category (->) where
+        id = \x -> x 
+        (.) = (ITMOPrelude.Primitive..)
 
 -- instances for Maybe
 
@@ -32,14 +38,14 @@ instance Monad Maybe where
 -- instances for List
 
 instance Functor List where
-    fmap = List.map
+    fmap = ITMOPrelude.List.map
 
 instance Monad List where
     xs >>= f = concatMap f xs
     _ >> xs = xs
-    return x = Cons x List.Nil
+    return x = Cons x ITMOPrelude.List.Nil
 
 -- instance for Tree
 
 instance Functor Tree where
-    fmap = Tree.map
+    fmap = ITMOPrelude.Tree.map
