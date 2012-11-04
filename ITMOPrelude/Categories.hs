@@ -49,3 +49,12 @@ instance Monad List where
 
 instance Functor Tree where
     fmap = ITMOPrelude.Tree.map
+
+-- State monad
+
+newtype State s a = State { runState :: s -> (s, a) }
+
+instance Monad (State s) where
+    return a = State $ \s -> (s, a)
+    a >>= f = State $ \s -> let (s1, b) = runState a s
+                            in runState (f b) s1
