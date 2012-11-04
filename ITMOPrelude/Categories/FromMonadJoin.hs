@@ -12,7 +12,6 @@ import ITMOPrelude.Categories.MonadFish
 
 instance MonadJoin m => Monad m where
     x >>= f = join $ fmap f x
-    _ >> y = y
     return = returnJoin    
 
 instance MonadJoin m => MonadFish m where

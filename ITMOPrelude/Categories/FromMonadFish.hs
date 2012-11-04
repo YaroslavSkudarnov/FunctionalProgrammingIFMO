@@ -11,7 +11,6 @@ import ITMOPrelude.Categories.MonadJoin
 -- делаем из нас
 instance MonadFish m => Monad m where
     a >>= f = ((\x -> x) >=> f) a
-    _ >> y = y
     return = returnFish
 
 instance MonadFish m => Functor m where

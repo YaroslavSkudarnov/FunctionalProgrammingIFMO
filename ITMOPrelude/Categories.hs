@@ -10,12 +10,14 @@ class Functor f where
 
 class Monad m where
     (>>=) :: m a -> (a -> m b) -> m b
-    (>>) :: m a -> m b -> m b
     return :: a -> m a
 
 class Category cat where
     id :: cat a a
     (.) :: cat b c -> cat a b -> cat a c
+
+(>>) :: Monad m => m a -> m b -> m b
+ma >> mb = ma >>= (\_ -> mb)
 
 -- instance for (->)
 
@@ -32,7 +34,6 @@ instance Functor Maybe where
 instance Monad Maybe where
     Just x >>= f = f x
     Nothing >>= _ = Nothing
-    _ >> x = x
     return = Just
 
 -- instances for List
@@ -42,7 +43,6 @@ instance Functor List where
 
 instance Monad List where
     xs >>= f = concatMap f xs
-    _ >> xs = xs
     return x = Cons x ITMOPrelude.List.Nil
 
 -- instance for Tree
