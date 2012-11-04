@@ -5,7 +5,7 @@ import ITMOPrelude.Categories.MonadFish
 import ITMOPrelude.Primitive
 
 -- Эти
-import ITMOPrelude.Categories
+import ITMOPrelude.Categories hiding ((.))
 import ITMOPrelude.Categories.MonadJoin
 
 -- делаем из нас
@@ -15,7 +15,7 @@ instance MonadFish m => Monad m where
     return = returnFish
 
 instance MonadFish m => Functor m where
-    fmap f a = ((\x -> x) >=> (\y -> returnFish (f y))) a
+    fmap f a = ((\x -> x) >=> (returnFish . f)) a
 
 instance MonadFish m => MonadJoin m where
     returnJoin = returnFish
